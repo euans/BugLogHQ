@@ -1,5 +1,5 @@
 <cfcomponent>
-	<cfset variables.bugLogClientVersion = "1.8-c6">	<!--- bugloghq client version --->
+	<cfset variables.bugLogClientVersion = "1.8-c7">	<!--- bugloghq client version --->
 	<cfset variables.bugEmailSender = "">
 	<cfset variables.bugEmailRecipients = "">
 	<cfset variables.bugLogListener = "">
@@ -108,7 +108,7 @@
 			switch(variables.protocol) {
 				case "SOAP":
 					try {
-						if(val(left(server.coldfusion.productVersion,1)) lte 7 or structKeyExists(server,"railo"))
+						if(val(left(server.coldfusion.productVersion,1)) lte 7 or structKeyExists(server,"lucee") or structKeyExists(server,"railo"))
 							variables.oBugLogListener = createObject("webservice", variables.bugLogListener);
 						else
 							variables.oBugLogListener = createObject("webservice", variables.bugLogListener, wsParams);
@@ -305,7 +305,7 @@
 			// reconstruct full URL
 			tmpURL = getPageContext().getRequest().getRequestURL();
 			if(cgi.QUERY_STRING neq "")
-				tmpURL = tmpURL & "?" & cgi.QUERY_STRING;
+				tmpURL = xmlFormat(tmpURL & "?" & cgi.QUERY_STRING);
 		</cfscript>
 
 
@@ -559,6 +559,10 @@
 		<cfargument name="data" type="struct">
 		<cfset var local = {}>
 		<cfloop list="#structKeyList(arguments.data)#" index="local.i">
+			<!--- Fix for JSON keys with a null value in ACF 10+ 8 & 9 would set null values to "null" string --->
+	            	<cfif !StructKeyExists(arguments.data,local.i)>
+	                	<cfset arguments.data[local.i] = "null">
+	            	</cfif>				
 			<cfif isStruct(arguments.data[local.i])>
 				<cfset arguments.data[local.i] = sanitizeKeyData(arguments.data[local.i])>
 			<cfelse>
